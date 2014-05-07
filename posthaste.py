@@ -21,14 +21,15 @@ monkey.patch_all()
 from gevent.pool import Pool
 from gevent.queue import Queue
 
-import sys
-import json
-import os
 import argparse
-import requests
 import functools
-import time
+import json
+import mimetypes
+import os
+import requests
+import sys
 import threading
+import time
 
 __version__ = '0.2.2'
 
@@ -208,10 +209,12 @@ class Posthaste(object):
                     continue
                 obj_name = os.path.relpath(full_path, directory)
                 obj_size = os.stat(full_path).st_size
+                content_type = mimetypes.guess_type(obj_name)[0] or 'text/text'
                 files.append({
                     'path': full_path,
                     'name': obj_name,
-                    'size': obj_size
+                    'size': obj_size,
+                    'content-type': content_type
                 })
         if verbose:
             sys.stdout.write('Scanning the filesystem for files...')
@@ -343,7 +346,8 @@ class Posthaste(object):
                         r = s.put('%s/%s/%s' %
                                   (self.endpoint,  container,  file['name']),
                                   data=body, headers={
-                                      'X-Auth-Token': self.token
+                                      'X-Auth-Token': self.token,
+                                      'Content-Type': file['content-type']
                                   })
                     except:
                         e = sys.exc_info()[1]
